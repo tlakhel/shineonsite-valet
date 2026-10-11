@@ -66,7 +66,6 @@ export default function Hero() {
       },
     });
     return () => controls.stop();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reducedMotion]);
 
   // Headline word stagger + drawn underline.
