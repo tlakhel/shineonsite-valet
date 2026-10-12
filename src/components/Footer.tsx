@@ -30,13 +30,34 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="mx-auto mt-8 max-w-7xl border-t border-white/15 px-4 pt-6 sm:px-6">
+      <div className="mx-auto mt-8 flex max-w-7xl flex-col gap-3 border-t border-white/15 px-4 pt-6 sm:px-6">
         <Link
           href="/dashboard"
           className="inline-flex min-h-[44px] items-center text-sm font-extrabold text-white underline underline-offset-4 hover:text-sun"
         >
           Owner dashboard (demo)
         </Link>
+        <p className="text-xs font-bold text-lines">
+          Before/after photos by{" "}
+          <a
+            href="https://unsplash.com/@dazambranoc"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-2 hover:text-sun"
+          >
+            Dany Caiza
+          </a>{" "}
+          and{" "}
+          <a
+            href="https://unsplash.com/@autotraderuk"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-2 hover:text-sun"
+          >
+            Autotrader UK
+          </a>{" "}
+          on Unsplash.
+        </p>
       </div>
     </footer>
   );

@@ -1,25 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import dynamic from "next/dynamic";
-import { useMotionValueEvent, useScroll } from "motion/react";
-import { animate as animateMotion } from "motion";
+import { useEffect, useRef } from "react";
 import { animate as animateAnime, stagger, svg, splitText } from "animejs";
 import { CheckCircle2, Droplets, Home, ShieldCheck } from "lucide-react";
 import ParticleButton from "@/components/kokonutui/particle-button";
 import ShimmerText from "@/components/kokonutui/shimmer-text";
 import HeroBackground from "@/components/HeroBackground";
-import { carPaints } from "@/components/Car3D";
+import BeforeAfter, { type BeforeAfterHandle } from "@/components/BeforeAfter";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
-
-const Car3D = dynamic(() => import("@/components/Car3D"), {
-  ssr: false,
-  loading: () => (
-    <div className="flex h-full w-full items-center justify-center text-ink-soft">
-      Loading 3D car…
-    </div>
-  ),
-});
 
 const TICKS = [
   { icon: ShieldCheck, label: "Fully insured" },
@@ -29,44 +17,10 @@ const TICKS = [
 
 export default function Hero() {
   const reducedMotion = useReducedMotion();
-  const sectionRef = useRef<HTMLDivElement>(null);
   const headlineRef = useRef<HTMLSpanElement>(null);
   const underlinePathRef = useRef<SVGPathElement>(null);
   const splashRef = useRef<HTMLDivElement>(null);
-
-  const [clean, setClean] = useState(0);
-  const effectiveClean = reducedMotion ? 1 : clean;
-  const [paintId, setPaintId] = useState(carPaints[0].id);
-  const phaseRef = useRef<"auto" | "interactive">("auto");
-
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start start", "end start"],
-  });
-
-  useMotionValueEvent(scrollYProgress, "change", (latest) => {
-    if (reducedMotion) return;
-    if (phaseRef.current === "interactive") {
-      setClean(Math.min(1, Math.max(0, latest)));
-    }
-  });
-
-  // One-time intro wash on load.
-  useEffect(() => {
-    if (reducedMotion) {
-      phaseRef.current = "interactive";
-      return;
-    }
-    const controls = animateMotion(0, 1, {
-      duration: 2.4,
-      ease: "easeInOut",
-      onUpdate: (latest) => setClean(latest),
-      onComplete: () => {
-        phaseRef.current = "interactive";
-      },
-    });
-    return () => controls.stop();
-  }, [reducedMotion]);
+  const beforeAfterRef = useRef<BeforeAfterHandle>(null);
 
   // Headline word stagger + drawn underline.
   useEffect(() => {
@@ -126,17 +80,7 @@ export default function Hero() {
 
   const handleWatchWash = () => {
     triggerSplash();
-    if (reducedMotion) return;
-    phaseRef.current = "auto";
-    const controls = animateMotion(0, 1, {
-      duration: 1.8,
-      ease: "easeInOut",
-      onUpdate: (latest) => setClean(latest),
-      onComplete: () => {
-        phaseRef.current = "interactive";
-      },
-    });
-    return () => controls.stop();
+    beforeAfterRef.current?.replay();
   };
 
   const scrollToBooking = () => {
@@ -145,14 +89,8 @@ export default function Hero() {
       ?.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth" });
   };
 
-  const selectedPaint =
-    carPaints.find((paint) => paint.id === paintId) ?? carPaints[0];
-
   return (
-    <section
-      ref={sectionRef}
-      className="relative overflow-hidden border-b border-lines bg-background"
-    >
+    <section className="relative overflow-hidden border-b border-lines bg-background">
       <HeroBackground />
       <div className="relative z-10 mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:items-center lg:gap-16 lg:py-24">
         {/* Left column */}
@@ -231,64 +169,9 @@ export default function Hero() {
           </ul>
         </div>
 
-        {/* Right column: 3D car */}
-        <div className="flex flex-col gap-4">
-          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl border border-lines bg-surface shadow-sm">
-            <Car3D
-              clean={effectiveClean}
-              paintHex={selectedPaint.hex}
-              reducedMotion={reducedMotion}
-              active
-            />
-            <span className="absolute left-4 top-4 rounded-full bg-ink px-4 py-1.5 text-sm font-bold text-white">
-              Clean {Math.round(effectiveClean * 100)}%
-            </span>
-          </div>
-
-          <div className="flex flex-col gap-4 rounded-2xl border border-lines bg-surface p-5 shadow-sm">
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-sm font-bold text-ink-soft">
-                Dirty
-              </span>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                value={Math.round(effectiveClean * 100)}
-                disabled={reducedMotion}
-                onChange={(event) => {
-                  phaseRef.current = "interactive";
-                  setClean(Number(event.target.value) / 100);
-                }}
-                className="h-2 flex-1 accent-teal disabled:cursor-not-allowed disabled:opacity-60"
-                aria-label="Clean percentage"
-              />
-              <span className="text-sm font-bold text-ink-soft">Clean</span>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-bold text-ink-soft">Paint:</span>
-              <div className="flex gap-2">
-                {carPaints.map((paint) => (
-                  <button
-                    key={paint.id}
-                    type="button"
-                    aria-label={paint.label}
-                    title={paint.label}
-                    onClick={() => setPaintId(paint.id)}
-                    className="h-11 w-11 rounded-full border-2 transition-transform"
-                    style={{
-                      backgroundColor: paint.hex,
-                      borderColor:
-                        paint.id === paintId ? "#0B1F33" : "#C3CFDA",
-                      transform:
-                        paint.id === paintId ? "scale(1.1)" : "scale(1)",
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
+        {/* Right column: before/after photo slider */}
+        <div>
+          <BeforeAfter ref={beforeAfterRef} />
         </div>
       </div>
     </section>
